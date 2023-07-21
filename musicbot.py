@@ -1,4 +1,5 @@
 from cv2 import cv2
+# import cv2
 import mss
 import numpy as np
 import os
@@ -9,15 +10,24 @@ import sys
 import threading
 from pynput.keyboard import Key, Listener, KeyCode
 
-path = sys.path[0]
-print("Type the tier for your music instrument; choose from [green/legendary]; and then press enter.")
-instrument_tier = input()
-img_path = os.path.join(path, f"img\\{instrument_tier}")
+def setInstruments():
+    path = sys.path[0]
+    print("Type the tier for your music instrument; choose from [green/legendary]; and then press enter.")
+    instrument_tier = input()
+    img_path = os.path.join(path, f"img\\{instrument_tier}")
+    return img_path
 
-print("Type the duration of your music in seconds and press enter.")
-song_duration = input()
-song_duration = int(song_duration)+8
+global img_path
+img_path = setInstruments()
 
+def setDuration():
+    print("Type the duration of your music in seconds and press enter.")
+    song_duration = input()
+    song_duration = int(song_duration)+8
+    return song_duration
+
+global song_duration
+song_duration = setDuration()
 
 def compImage(imgSource, imgTarget, charName):
     resultTry = cv2.matchTemplate(imgSource, imgTarget, cv2.TM_CCOEFF_NORMED)
@@ -87,13 +97,19 @@ def performance():
 def loop_executor():
     print(f"NWMusicBot looping with duration of {song_duration+3}")
     while keep_playing:
-        time.sleep(song_duration)
-        keyboardC.press('e')
-        time.sleep(2)
-        keyboardC.release('e')
-        keyboardC.press('e')
-        time.sleep(0.5)
-        keyboardC.release('e')
+        for i in range(song_duration):
+            if keep_playing==False:
+                break
+            else:
+                time.sleep(1)
+        if keep_playing==True:
+            keyboardC.press('e')
+            time.sleep(2)
+            keyboardC.release('e')
+        if keep_playing==True:
+            keyboardC.press('e')
+            time.sleep(0.5)
+            keyboardC.release('e')
     return 0
 
 def statusCheck(key):
@@ -102,13 +118,18 @@ def statusCheck(key):
         keep_playing=False
         return False
 
-img_list = []
-img_list.append(cv2.imread(os.path.join(img_path, 'W.jpg'), cv2.IMREAD_UNCHANGED))
-img_list.append(cv2.imread(os.path.join(img_path, 'A.jpg'), cv2.IMREAD_UNCHANGED))
-img_list.append(cv2.imread(os.path.join(img_path, 'S.jpg'), cv2.IMREAD_UNCHANGED))
-img_list.append(cv2.imread(os.path.join(img_path, 'D.jpg'), cv2.IMREAD_UNCHANGED))
-img_list.append(cv2.imread(os.path.join(img_path, 'Space.jpg'), cv2.IMREAD_UNCHANGED))
-img_list.append(cv2.imread(os.path.join(img_path, 'BiClick.jpg'), cv2.IMREAD_UNCHANGED))
+def loadImageList():
+    img_list = []
+    img_list.append(cv2.imread(os.path.join(img_path, 'W.jpg'), cv2.IMREAD_UNCHANGED))
+    img_list.append(cv2.imread(os.path.join(img_path, 'A.jpg'), cv2.IMREAD_UNCHANGED))
+    img_list.append(cv2.imread(os.path.join(img_path, 'S.jpg'), cv2.IMREAD_UNCHANGED))
+    img_list.append(cv2.imread(os.path.join(img_path, 'D.jpg'), cv2.IMREAD_UNCHANGED))
+    img_list.append(cv2.imread(os.path.join(img_path, 'Space.jpg'), cv2.IMREAD_UNCHANGED))
+    img_list.append(cv2.imread(os.path.join(img_path, 'BiClick.jpg'), cv2.IMREAD_UNCHANGED))
+    return img_list
+
+global img_list
+img_list = loadImageList()
 
 mouseC = mouse.Controller()
 keyboardC = keyboard.Controller()
@@ -116,24 +137,30 @@ stc = mss.mss()
 os.makedirs('results', exist_ok=True)
 os.makedirs('output', exist_ok=True)
 
-global keep_playing
-keep_playing = True
+def main():
+    global keep_playing, song_duration
+    keep_playing = True
 
-t_music = threading.Thread(target=performance)
-t_loop = threading.Thread(target=loop_executor)
+    t_music = threading.Thread(target=performance)
+    t_loop = threading.Thread(target=loop_executor)
 
-t_music.start()
-t_loop.start()
+    t_music.start()
+    t_loop.start()
 
-# Collect all event until released
-with Listener(on_press = statusCheck) as listener:
-    listener.join()
+    # Collect all event until released
+    with Listener(on_press = statusCheck) as listener:
+        listener.join()
 
+    if keep_playing==False:
+        print(f"Music bot service will stop within {song_duration+3} seconds.")
+        _ = t_music.join()
+        _ = t_loop.join()
+        print(f"Restart Service? [y/n]")
+        restart_status = input()
+        if restart_status=='y':
+            song_duration = setDuration()
+            main()
+        else:
+            exit()
 
-if keep_playing==False:
-    print(f"Music bot service will stop within {song_duration+3} seconds.")
-    print(keep_playing)
-    _ = t_music.join()
-    _ = t_loop.join()
-
-exit()
+main()
