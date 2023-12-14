@@ -1,4 +1,4 @@
-mss
+mss==7.00
 numpy
 opencv-python
 PyDirectInput

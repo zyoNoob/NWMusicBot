@@ -1,5 +1,5 @@
-from cv2 import cv2
-# import cv2
+# from cv2 import cv2
+import cv2
 import mss
 import numpy as np
 import os
@@ -14,6 +14,8 @@ def setInstruments():
     path = sys.path[0]
     print("Type the tier for your music instrument; choose from [green/legendary]; and then press enter.")
     instrument_tier = input()
+    if instrument_tier=='':
+        instrument_tier='legendary'
     img_path = os.path.join(path, f"img\\{instrument_tier}")
     return img_path
 
